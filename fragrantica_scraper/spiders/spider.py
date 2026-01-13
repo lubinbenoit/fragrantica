@@ -6,7 +6,7 @@ class FragranticaSpider(scrapy.Spider):
     name = "fragrantica"
     allowed_domains = ["fragrantica.com"]
     start_urls = [
-        "https://www.fragrantica.com/perfume/Chanel/Chanel-No-5-100.html"
+        "https://www.fragrantica.com/perfume/Yves-Saint-Laurent/Y-100.html"
     ]
 
     def parse(self, response):

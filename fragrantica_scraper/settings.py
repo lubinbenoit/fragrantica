@@ -1,5 +1,10 @@
 ROBOTSTXT_OBEY = False
 
+BOT_NAME = 'fragrantica_scraper'
+
+SPIDER_MODULES = ['fragrantica_scraper.spiders']
+NEWSPIDER_MODULE = 'fragrantica_scraper.spiders'
+
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
