@@ -14,21 +14,24 @@ class FragranticaSpider(scrapy.Spider):
         item = FragranticaPerfumeItem()
 
         item["url"] = response.url
-        item["name"] = response.css("h1::text").get().strip()
-
+        
+        # item["name"] = response.css("h1::text").get().strip()[2:] # response.css("h1::text").get().strip()
         # brand est dans itemprop="brand"
-        item["brand"] = response.css('[itemprop="brand"]::text').get()
+        #item["brand"] = response.css('[itemprop="brand"]::text').get()
 
+        title = response.css("h1::text").get().strip()
+        item["name"] = title
+        item["brand"] = title.split(" ", 1)[1] if " " in title else None
+        
         accords = {}
 
-        for bar in response.css(".accord-bar"):
-            name = bar.xpath("text()").get()
+        for bar in response.xpath('//div[contains(@style, "width")]'):
+            name = bar.xpath('.//span[@class="truncate"]/text()').get()
             style = bar.attrib.get("style", "")
 
-            match = re.search(r"width:\s*([\d.]+)%", style)
+            match = re.search(r'width:\s*([\d.]+)%', style)
             if name and match:
                 accords[name.strip()] = float(match.group(1))
-
-        item["accords"] = accords
+            item["accords"] = accords
 
         yield item
