@@ -1,7 +1,6 @@
 # perfume_urls_spider.py
 import scrapy
 import random
-from scrapy.exceptions import CloseSpider
 from pymongo import MongoClient
 
 
@@ -32,6 +31,7 @@ class PerfumeURLsSpider(scrapy.Spider):
     def __init__(self, *args, skip_existing=True, **kwargs):
         super().__init__(*args, **kwargs)
         self.skip_existing = skip_existing
+        self.got_429 = False  # Flag pour détecter le 429
         
         if self.skip_existing:
             self.scraped_designers = self._load_scraped_designers()
@@ -130,9 +130,14 @@ class PerfumeURLsSpider(scrapy.Spider):
     
     def parse_designer(self, response):
         """Parse la page d'un designer pour récupérer les URLs de ses parfums."""
+        # Ne plus lever CloseSpider ici, juste logger et retourner
         if response.status == 429:
-            self.logger.error("Erreur 429 détectée - Arrêt du spider")
-            raise CloseSpider(reason="rate_limited_429")
+            self.logger.warning(
+                f"HTTP 429 détecté sur {response.url} - "
+                "Le spider sera arrêté par le middleware"
+            )
+            self.got_429 = True
+            return  # Sortir sans yield
         
         designer = response.css("h1::text").get()
         if designer:
@@ -163,13 +168,21 @@ class PerfumeURLsSpider(scrapy.Spider):
         )
     
     def handle_error(self, failure):
-        """Gère les erreurs de requête."""
-        request = failure.request
+        """Gère les erreurs de requête de manière non-bloquante."""
+        # Ne plus logger les erreurs liées au 429 car elles sont gérées par le middleware
+        if "IgnoreRequest" in str(failure):
+            return  # Silencieux pour les 429
         
-        if failure.check(scrapy.spidermiddlewares.httperror.HttpError):
-            response = failure.value.response
-            if response.status == 429:
-                self.logger.error(f"Erreur 429 sur {request.url} - Arrêt du spider")
-                raise CloseSpider(reason="rate_limited_429")
-        
-        self.logger.error(f"Erreur sur {request.url}: {failure}")
+        self.logger.debug(f"Requête ignorée: {failure.request.url}")
+    
+    def closed(self, reason):
+        """Appelé quand le spider se ferme."""
+        if reason == 'rate_limited_429':
+            self.logger.warning(
+                "⚠️  Spider arrêté à cause du rate limiting (429). "
+                "Les URLs collectées jusqu'ici ont été sauvegardées."
+            )
+            self.logger.info(
+                "💡 Conseil: Relancez plus tard pour continuer "
+                "(les URLs déjà collectées seront automatiquement skippées)"
+            )

@@ -1,6 +1,7 @@
 # middlewares.py
 import random
-from scrapy.exceptions import CloseSpider
+from scrapy import signals
+from scrapy.exceptions import IgnoreRequest
 
 class StopOn429Middleware:
     """Middleware to stop spider when encountering HTTP 429 (Too Many Requests)."""
@@ -17,9 +18,12 @@ class StopOn429Middleware:
         if response.status == 429:
             spider.logger.warning(
                 f"HTTP 429 (Too Many Requests) detected on {request.url}. "
-                "Closing spider to avoid rate limiting."
+                "Stopping spider gracefully to avoid rate limiting."
             )
-            raise CloseSpider("429_received")
+            # Arrêt propre du spider
+            self.crawler.engine.close_spider(spider, reason='rate_limited_429')
+            # Ignorer cette requête
+            raise IgnoreRequest(f"429 received for {request.url}")
         return response
 
 

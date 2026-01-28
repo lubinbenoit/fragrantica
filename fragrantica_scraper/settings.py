@@ -7,6 +7,14 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis .env
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
+
 BOT_NAME = "fragrantica_scraper"
 
 SPIDER_MODULES = ["fragrantica_scraper.spiders"]
@@ -60,12 +68,6 @@ DOWNLOADER_MIDDLEWARES = {
 #    "scrapy.extensions.telnet.TelnetConsole": None,
 #}
 
-# Configure item pipelines
-# See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    "fragrantica_scraper.pipelines.FragranticaScraperPipeline": 300,
-#}
-
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
 AUTOTHROTTLE_ENABLED = True
@@ -101,8 +103,9 @@ RETRY_HTTP_CODES = [429, 500, 502, 503, 504]
 LOG_LEVEL = 'INFO'
 
 # === Configuration MongoDB ===
-MONGO_URI = "mongodb://localhost:27017/"
-MONGO_DATABASE = "fragrantica"
+# Utilise les variables d'environnement avec fallback sur valeurs par défaut
+MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
+MONGO_DATABASE = os.getenv('MONGO_DATABASE', 'fragrantica')
 
 # === Activation des pipelines ===
 ITEM_PIPELINES = {

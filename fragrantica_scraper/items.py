@@ -1,3 +1,4 @@
+# items.py
 import scrapy
 
 class FragranticaPerfumeItem(scrapy.Item):
