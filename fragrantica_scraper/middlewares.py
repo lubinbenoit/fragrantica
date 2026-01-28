@@ -2,7 +2,6 @@
 import random
 from scrapy import signals
 from scrapy.exceptions import IgnoreRequest
-
 class StopOn429Middleware:
     """Middleware to stop spider when encountering HTTP 429 (Too Many Requests)."""
     
@@ -25,8 +24,6 @@ class StopOn429Middleware:
             # Ignorer cette requête
             raise IgnoreRequest(f"429 received for {request.url}")
         return response
-
-
 class RotateUserAgentMiddleware:
     """Middleware to rotate user agents on each request."""
     

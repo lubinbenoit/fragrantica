@@ -26,12 +26,12 @@ class PerfumeURLsSpider(scrapy.Spider):
         'RETRY_ENABLED': False,
     }
     
-    max_urls_per_designer = 10
+    max_urls_per_designer = 100
     
     def __init__(self, *args, skip_existing=True, **kwargs):
         super().__init__(*args, **kwargs)
         self.skip_existing = skip_existing
-        self.got_429 = False  # Flag pour détecter le 429
+        self.got_429 = False
         
         if self.skip_existing:
             self.scraped_designers = self._load_scraped_designers()
@@ -53,7 +53,6 @@ class PerfumeURLsSpider(scrapy.Spider):
             client = MongoClient(mongo_uri)
             db = client[mongo_db]
             
-            # Designers avec le nombre max d'URLs déjà collectées
             pipeline = [
                 {"$group": {"_id": "$designer", "count": {"$sum": 1}}},
                 {"$match": {"count": {"$gte": self.max_urls_per_designer}}}
@@ -104,7 +103,6 @@ class PerfumeURLsSpider(scrapy.Spider):
         for a in designer_links:
             designer_name = a.xpath("normalize-space(text())").get()
             
-            # Skip si déjà complètement scrapé
             if designer_name in self.scraped_designers:
                 skipped_count += 1
                 self.logger.debug(
@@ -130,14 +128,13 @@ class PerfumeURLsSpider(scrapy.Spider):
     
     def parse_designer(self, response):
         """Parse la page d'un designer pour récupérer les URLs de ses parfums."""
-        # Ne plus lever CloseSpider ici, juste logger et retourner
         if response.status == 429:
             self.logger.warning(
                 f"HTTP 429 détecté sur {response.url} - "
                 "Le spider sera arrêté par le middleware"
             )
             self.got_429 = True
-            return  # Sortir sans yield
+            return
         
         designer = response.css("h1::text").get()
         if designer:
@@ -145,13 +142,11 @@ class PerfumeURLsSpider(scrapy.Spider):
         else:
             designer = response.meta.get("designer", "Unknown")
         
-        # Récupération des URLs des parfums
         perfume_links = list(set(
             response.xpath('//a[contains(@href, "/perfume/")]/@href').getall()
         ))
         random.shuffle(perfume_links)
         
-        # Filtrer les URLs déjà présentes
         new_urls = []
         for link in perfume_links[:self.max_urls_per_designer]:
             full_url = response.urljoin(link)
@@ -169,13 +164,12 @@ class PerfumeURLsSpider(scrapy.Spider):
     
     def handle_error(self, failure):
         """Gère les erreurs de requête de manière non-bloquante."""
-        # Ne plus logger les erreurs liées au 429 car elles sont gérées par le middleware
         if "IgnoreRequest" in str(failure):
-            return  # Silencieux pour les 429
+            return
         
         self.logger.debug(f"Requête ignorée: {failure.request.url}")
     
-    def closed(self, reason):
+    async def closed(self, reason):
         """Appelé quand le spider se ferme."""
         if reason == 'rate_limited_429':
             self.logger.warning(
