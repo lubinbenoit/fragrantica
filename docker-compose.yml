@@ -1,6 +1,8 @@
-version: '3.8'
+# docker-compose.yml
+# version: '3.8' (obsolète)
 
 services:
+  # Service MongoDB
   mongodb:
     image: mongo:7.0
     container_name: fragrantica_mongodb
@@ -22,6 +24,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # Service Mongo Express (Interface Web)
   mongo-express:
     image: mongo-express:latest
     container_name: fragrantica_mongo_express
@@ -35,9 +38,35 @@ services:
       ME_CONFIG_BASICAUTH_USERNAME: ${MONGOEXPRESS_LOGIN:-admin}
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGOEXPRESS_PASSWORD:-pass}
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     networks:
       - fragrantica_network
+
+  # Service Scrapy (votre application)
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fragrantica_scraper
+    restart: "no"
+    environment:
+      # MongoDB via le nom du service Docker
+      MONGO_URI: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-password123}@mongodb:27017/
+      MONGO_DATABASE: ${MONGO_DATABASE:-fragrantica}
+      PYTHONPATH: /app
+      PYTHONUNBUFFERED: 1
+    volumes:
+      # Montage des données pour persistance
+      - ./data:/app/data
+      - ./crawls:/app/crawls
+      - ./logs:/app/logs
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - fragrantica_network
+    command: ["run_scrapers.py"]
 
 volumes:
   mongodb_data:

@@ -1,0 +1,42 @@
+# .dockerignore
+# Fichiers Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Environnements virtuels
+.venv/
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# Données locales
+data/
+crawls/
+logs/
+*.json
+*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
