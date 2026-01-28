@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script de lancement des scrapers Fragrantica avec gestion avancée.
-Usage: python run_scrapers.py [--urls-only|--data-only|--stats]
+Script principal pour lancer les scrapers Fragrantica.
+Usage: python run_scrapers.py [--urls-only|--data-only|--stats|--resume]
 """
 
 import sys
@@ -10,68 +10,143 @@ import argparse
 from pathlib import Path
 from pymongo import MongoClient
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+
+# Charger .env
+load_dotenv()
 
 
 def run_command(cmd, description):
-    """Exécute une commande et gère les erreurs."""
-    print(f"\n{'='*60}")
+    """Exécute une commande Scrapy et gère les erreurs."""
+    print(f"\n{'='*70}")
     print(f"🚀 {description}")
-    print(f"{'='*60}\n")
+    print(f"{'='*70}\n")
     
     try:
         result = subprocess.run(
             cmd,
             shell=True,
-            check=True,
-            capture_output=False,
+            check=False,  # Ne pas lever d'exception sur les codes d'erreur
             text=True
         )
-        print(f"\n✓ {description} - Completed successfully")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"\n✗ {description} - Failed with error code {e.returncode}")
+        
+        # Codes de sortie acceptables
+        # 0 = succès complet
+        # 1 = arrêt précoce mais gracieux (429, interruption, etc.)
+        if result.returncode in (0, 1):
+            if result.returncode == 0:
+                print(f"\n✅ {description} - Terminé avec succès")
+            else:
+                print(f"\n⚠️  {description} - Arrêté prématurément (code {result.returncode})")
+                print("    Les données collectées jusqu'ici ont été sauvegardées.")
+            return True
+        else:
+            print(f"\n❌ {description} - Échec avec le code d'erreur {result.returncode}")
+            return False
+            
+    except KeyboardInterrupt:
+        print(f"\n\n⚠️  Interruption par l'utilisateur (Ctrl+C)")
+        print("    Les données collectées jusqu'ici ont été sauvegardées.")
+        return True  # Considérer comme succès partiel
+    except Exception as e:
+        print(f"\n❌ Erreur inattendue: {e}")
         return False
 
 
 def get_mongo_stats():
     """Affiche les statistiques MongoDB."""
     try:
-        client = MongoClient('mongodb://localhost:27017/')
-        db = client['fragrantica']
+        mongo_uri = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
+        mongo_db = os.getenv('MONGO_DATABASE', 'fragrantica')
+        
+        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+        db = client[mongo_db]
         
         urls_count = db.perfume_urls.count_documents({})
         data_count = db.perfume_data.count_documents({})
         
-        print(f"\n{'='*60}")
-        print("📊 MongoDB Statistics")
-        print(f"{'='*60}")
-        print(f"URLs collected:      {urls_count:,}")
-        print(f"Perfumes scraped:    {data_count:,}")
-        print(f"Remaining to scrape: {urls_count - data_count:,}")
-        print(f"Progress:            {(data_count/urls_count*100):.1f}%" if urls_count > 0 else "Progress: 0%")
-        print(f"{'='*60}\n")
+        print(f"\n{'='*70}")
+        print("📊 Statistiques MongoDB")
+        print(f"{'='*70}")
+        print(f"URLs collectées:           {urls_count:,}")
+        print(f"Parfums scrapés:           {data_count:,}")
+        
+        if urls_count > 0:
+            remaining = urls_count - data_count
+            progress = (data_count / urls_count * 100) if urls_count > 0 else 0
+            print(f"Restant à scraper:         {remaining:,}")
+            print(f"Progression:               {progress:.1f}%")
+            
+            # Designers les plus représentés
+            pipeline = [
+                {"$group": {"_id": "$designer", "count": {"$sum": 1}}},
+                {"$sort": {"count": -1}},
+                {"$limit": 5}
+            ]
+            top_designers = list(db.perfume_urls.aggregate(pipeline))
+            
+            if top_designers:
+                print(f"\nTop 5 designers (URLs):")
+                for i, designer in enumerate(top_designers, 1):
+                    print(f"  {i}. {designer['_id']}: {designer['count']:,} parfums")
+        
+        print(f"{'='*70}\n")
         
         client.close()
     except Exception as e:
-        print(f"⚠️  Could not fetch MongoDB stats: {e}")
+        print(f"⚠️  Impossible de récupérer les stats MongoDB: {e}")
+
+
+def check_mongodb():
+    """Vérifie que MongoDB est accessible."""
+    try:
+        mongo_uri = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
+        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=3000)
+        client.admin.command('ping')
+        client.close()
+        return True
+    except Exception as e:
+        print(f"\n❌ Erreur: MongoDB n'est pas accessible")
+        print(f"   Détails: {e}")
+        print(f"\n💡 Solution: Démarrez MongoDB avec:")
+        print(f"   docker-compose up -d\n")
+        return False
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Run Fragrantica scrapers')
-    parser.add_argument('--urls-only', action='store_true', 
-                       help='Only collect perfume URLs')
-    parser.add_argument('--data-only', action='store_true', 
-                       help='Only scrape perfume data')
-    parser.add_argument('--stats', action='store_true', 
-                       help='Show MongoDB statistics only')
-    parser.add_argument('--resume', action='store_true', 
-                       help='Resume interrupted scraping')
+    parser = argparse.ArgumentParser(
+        description='Lance les scrapers Fragrantica',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Exemples d'utilisation:
+  python run_scrapers.py              # Exécute tout
+  python run_scrapers.py --urls-only  # Collecte uniquement les URLs
+  python run_scrapers.py --data-only  # Scrappe uniquement les données
+  python run_scrapers.py --stats      # Affiche les statistiques
+  python run_scrapers.py --resume     # Reprend après interruption
+        """
+    )
+    
+    parser.add_argument('--urls-only', action='store_true',
+                       help='Collecte uniquement les URLs de parfums')
+    parser.add_argument('--data-only', action='store_true',
+                       help='Scrappe uniquement les données de parfums')
+    parser.add_argument('--stats', action='store_true',
+                       help='Affiche uniquement les statistiques MongoDB')
+    parser.add_argument('--resume', action='store_true',
+                       help='Reprend le scraping après interruption')
     
     args = parser.parse_args()
     
     # Vérifier qu'on est dans le bon répertoire
     if not Path('scrapy.cfg').exists():
-        print("❌ Error: scrapy.cfg not found. Please run this script from the project root.")
+        print("❌ Erreur: scrapy.cfg introuvable.")
+        print("   Exécutez ce script depuis la racine du projet.")
+        sys.exit(1)
+    
+    # Vérifier MongoDB
+    if not check_mongodb():
         sys.exit(1)
     
     # Statistiques uniquement
@@ -79,32 +154,56 @@ def main():
         get_mongo_stats()
         sys.exit(0)
     
-    print(f"\n🕐 Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"\n{'='*70}")
+    print("🌸 Fragrantica Scraper")
+    print(f"{'='*70}")
+    print(f"🕐 Démarré à: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{'='*70}")
     
-    # Collecter les URLs
+    # Statistiques avant
+    get_mongo_stats()
+    
+    # Étape 1: Collecter les URLs
     if not args.data_only:
         success = run_command(
             "scrapy crawl perfume_urls",
-            "Collecting perfume URLs"
+            "Étape 1/2: Collection des URLs de parfums"
         )
-        if not success and not args.resume:
-            sys.exit(1)
+        
+        # Ne pas arrêter même en cas d'arrêt prématuré (429)
+        # On continue avec les URLs qu'on a
+        if not success:
+            print("\n⚠️  La collection d'URLs a rencontré un problème")
+            print("   Mais nous allons continuer avec les URLs déjà collectées...")
     
-    # Scraper les données
+    # Étape 2: Scraper les données
     if not args.urls_only:
         success = run_command(
             "scrapy crawl perfume_data",
-            "Scraping perfume data"
+            "Étape 2/2: Scraping des données de parfums"
         )
+        
         if not success:
-            sys.exit(1)
+            print("\n⚠️  Le scraping des données s'est arrêté")
+            print("   Vous pouvez reprendre avec: python run_scrapers.py --data-only")
     
-    # Afficher les stats finales
+    # Statistiques finales
+    print(f"\n{'='*70}")
+    print("📊 Statistiques finales")
+    print(f"{'='*70}")
     get_mongo_stats()
     
-    print(f"\n🕐 Finished at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("🎉 All tasks completed!\n")
+    print(f"🕐 Terminé à: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("\n💡 Pour continuer le scraping plus tard:")
+    print("   python run_scrapers.py --urls-only  (collecte plus d'URLs)")
+    print("   python run_scrapers.py --data-only  (scrappe les URLs existantes)")
+    print()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\n⚠️  Interruption par l'utilisateur (Ctrl+C)")
+        print("💡 Pour reprendre, lancez: python run_scrapers.py --resume\n")
+        sys.exit(0)
