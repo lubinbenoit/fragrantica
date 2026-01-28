@@ -99,3 +99,19 @@ RETRY_HTTP_CODES = [429, 500, 502, 503, 504]
 
 # Log level
 LOG_LEVEL = 'INFO'
+
+# === Configuration MongoDB ===
+MONGO_URI = "mongodb://localhost:27017/"
+MONGO_DATABASE = "fragrantica"
+
+# === Activation des pipelines ===
+ITEM_PIPELINES = {
+    # Pipeline de nettoyage (s'exécute en premier, priorité 100)
+    "fragrantica_scraper.pipelines.DataCleaningPipeline": 100,
+    
+    # Pipeline pour les URLs (priorité 300)
+    "fragrantica_scraper.pipelines.MongoPerfumeURLsPipeline": 300,
+    
+    # Pipeline pour les données de parfums (priorité 400)
+    "fragrantica_scraper.pipelines.MongoPerfumeDataPipeline": 400,
+}
