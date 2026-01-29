@@ -11,8 +11,8 @@ class PerfumeSpider(scrapy.Spider):
     
     custom_settings = {
         'ROBOTSTXT_OBEY': False,
-        'CONCURRENT_REQUESTS': 1,
-        'DOWNLOAD_DELAY': 3,
+        'CONCURRENT_REQUESTS': 6,
+        'DOWNLOAD_DELAY': 1,
         'RANDOMIZE_DOWNLOAD_DELAY': True,
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_START_DELAY': 3,
@@ -27,18 +27,33 @@ class PerfumeSpider(scrapy.Spider):
     
     def start_requests(self):
         """Load URLs from MongoDB and skip already scraped ones."""
-        mongo_uri = self.settings.get('MONGO_URI', 'mongodb://localhost:27017/')
+        # ✅ Valeur par défaut Docker-friendly
+        mongo_uri = self.settings.get(
+            'MONGO_URI', 
+            'mongodb://admin:password123@mongodb:27017/'
+        )
         mongo_db = self.settings.get('MONGO_DATABASE', 'fragrantica')
         
-        client = MongoClient(mongo_uri)
-        db = client[mongo_db]
+        self.logger.info(f"Connecting to MongoDB: {mongo_uri}")
         
         try:
+            client = MongoClient(
+                mongo_uri,
+                serverSelectionTimeoutMS=10000,
+                connectTimeoutMS=10000
+            )
+            
+            # Test de connexion
+            client.admin.command('ping')
+            db = client[mongo_db]
+            
+            # Charger les URLs
             all_urls = list(db.perfume_urls.find(
                 {}, 
                 {"perfume_url": 1, "designer": 1, "_id": 0}
             ))
             
+            # Charger les URLs déjà scrapées
             scraped_urls = set(
                 item["url"] 
                 for item in db.perfume_data.find({}, {"url": 1, "_id": 0})
@@ -46,6 +61,7 @@ class PerfumeSpider(scrapy.Spider):
             
             self.logger.info(f"Found {len(scraped_urls)} already scraped perfumes")
             
+            # Calculer les URLs restantes
             remaining = [
                 u for u in all_urls 
                 if u["perfume_url"] not in scraped_urls
@@ -57,6 +73,7 @@ class PerfumeSpider(scrapy.Spider):
                 f"Remaining: {len(remaining)}"
             )
             
+            # Générer les requêtes
             for data in remaining:
                 url = data["perfume_url"]
                 designer = data.get("designer", "Unknown")
@@ -67,6 +84,12 @@ class PerfumeSpider(scrapy.Spider):
                     errback=self.handle_error,
                     dont_filter=True
                 )
+        
+        except Exception as e:
+            self.logger.error(f"MongoDB connection failed: {e}")
+            import traceback
+            self.logger.error(traceback.format_exc())
+            raise
         
         finally:
             client.close()

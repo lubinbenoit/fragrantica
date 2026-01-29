@@ -7,8 +7,11 @@ services:
     image: mongo:7.0
     container_name: fragrantica_mongodb
     restart: unless-stopped
-    ports:
-      - "27017:27017"
+    # ✅ Ne plus exposer le port publiquement
+    # ports:
+    #   - "27017:27017"  # ❌ Retiré pour éviter conflits
+    expose:
+      - "27017"  # ✅ Accessible uniquement depuis le réseau Docker
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password123}
