@@ -57,10 +57,23 @@ def run_command(cmd, description):
 def get_mongo_stats():
     """Affiche les statistiques MongoDB."""
     try:
-        mongo_uri = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
+        # ✅ Valeur par défaut Docker-friendly
+        mongo_uri = os.getenv(
+            'MONGO_URI', 
+            'mongodb://admin:password123@mongodb:27017/'
+        )
         mongo_db = os.getenv('MONGO_DATABASE', 'fragrantica')
         
-        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+        print(f"🔗 Connecting to: {mongo_uri}")
+        
+        client = MongoClient(
+            mongo_uri, 
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=5000
+        )
+        
+        # Test de connexion
+        client.admin.command('ping')
         db = client[mongo_db]
         
         urls_count = db.perfume_urls.count_documents({})
@@ -96,21 +109,37 @@ def get_mongo_stats():
         client.close()
     except Exception as e:
         print(f"⚠️  Impossible de récupérer les stats MongoDB: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 def check_mongodb():
     """Vérifie que MongoDB est accessible."""
     try:
-        mongo_uri = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
-        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=3000)
+        # ✅ Valeur par défaut Docker-friendly
+        mongo_uri = os.getenv(
+            'MONGO_URI', 
+            'mongodb://admin:password123@mongodb:27017/'
+        )
+        
+        print(f"🔍 Checking MongoDB connection: {mongo_uri}")
+        
+        client = MongoClient(
+            mongo_uri, 
+            serverSelectionTimeoutMS=3000,
+            connectTimeoutMS=3000
+        )
         client.admin.command('ping')
         client.close()
+        
+        print("✅ MongoDB connection successful!\n")
         return True
     except Exception as e:
         print(f"\n❌ Erreur: MongoDB n'est pas accessible")
+        print(f"   URI tentée: {os.getenv('MONGO_URI', 'non définie')}")
         print(f"   Détails: {e}")
-        print(f"\n💡 Solution: Démarrez MongoDB avec:")
-        print(f"   docker-compose up -d\n")
+        print(f"\n💡 Solution:")
+        print(f"   - Si vous utilisez Docker: docker-compose up -d mongodb")
         return False
 
 
@@ -194,10 +223,6 @@ Exemples d'utilisation:
     get_mongo_stats()
     
     print(f"🕐 Terminé à: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("\n💡 Pour continuer le scraping plus tard:")
-    print("   python run_scrapers.py --urls-only  (collecte plus d'URLs)")
-    print("   python run_scrapers.py --data-only  (scrappe les URLs existantes)")
-    print()
 
 
 if __name__ == "__main__":

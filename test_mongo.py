@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """Script de test de la connexion MongoDB"""
-
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 
-# Charger .env
+# ✅ Charger .env
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
+
 def test_connection():
-    mongo_uri = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
+    # ✅ Utilise .env ou défaut localhost (pour accès local via port exposé)
+    mongo_uri = os.getenv('MONGO_URI', 'mongodb://admin:password123@localhost:27017/')
     mongo_db = os.getenv('MONGO_DATABASE', 'fragrantica')
     
     print(f"🔍 Test de connexion à MongoDB")
@@ -52,12 +53,17 @@ def test_connection():
     except ConnectionFailure as e:
         print(f"❌ Erreur de connexion: {e}")
         print("\n💡 Vérifiez que MongoDB est démarré:")
-        print("   docker-compose up -d")
+        print("   docker-compose up -d mongodb")
+        print("\n💡 Si vous utilisez Docker sans port exposé:")
+        print("   docker-compose exec scraper python test_mongo.py")
         return False
     
     except Exception as e:
         print(f"❌ Erreur inattendue: {e}")
+        import traceback
+        traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     test_connection()

@@ -6,15 +6,45 @@ Usage: python scripts/mongo_utils.py [command]
 
 import json
 import sys
+import os
 from pathlib import Path
 from pymongo import MongoClient
 from datetime import datetime
+from dotenv import load_dotenv
+
+# ✅ Charger les variables d'environnement
+load_dotenv()
 
 
 class MongoUtils:
-    def __init__(self, uri='mongodb://localhost:27017/', db_name='fragrantica'):
-        self.client = MongoClient(uri)
-        self.db = self.client[db_name]
+    def __init__(self, uri=None, db_name=None):
+        """
+        Initialise la connexion MongoDB.
+        Utilise les variables d'environnement si non spécifié.
+        """
+        # ✅ Priorité : paramètre > .env > défaut Docker
+        self.uri = uri or os.getenv(
+            'MONGO_URI', 
+            'mongodb://admin:password123@localhost:27017/'
+        )
+        self.db_name = db_name or os.getenv('MONGO_DATABASE', 'fragrantica')
+        
+        print(f"🔗 Connecting to: {self.uri}")
+        print(f"📂 Database: {self.db_name}\n")
+        
+        try:
+            self.client = MongoClient(
+                self.uri,
+                serverSelectionTimeoutMS=5000
+            )
+            # Test de connexion
+            self.client.admin.command('ping')
+            self.db = self.client[self.db_name]
+        except Exception as e:
+            print(f"❌ Connection failed: {e}")
+            print("\n💡 Make sure MongoDB is running:")
+            print("   docker-compose up -d mongodb")
+            sys.exit(1)
     
     def export_to_json(self, collection_name, output_file):
         """Exporte une collection MongoDB vers JSON."""
@@ -64,7 +94,7 @@ class MongoUtils:
         # Progress
         if urls_count > 0:
             remaining = urls_count - data_count
-            progress = (data_count / urls_count * 100)
+            progress = (data_count / urls_count * 100) if urls_count > 0 else 0
             print(f"\n{'─'*70}")
             print(f"Remaining to scrape:       {remaining:,}")
             print(f"Progress:                  {progress:.1f}%")
@@ -107,7 +137,7 @@ def main():
         sys.exit(1)
     
     command = sys.argv[1]
-    utils = MongoUtils()
+    utils = MongoUtils()  # ✅ Utilise automatiquement .env
     
     try:
         if command == 'stats':
