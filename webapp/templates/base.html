@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">
+                <a href="{{ url_for('main.index') }}" class="logo">
+                    🌸 {{ app_name }}
+                </a>
+            </div>
+            
+            <div class="navbar-menu">
+                <a href="{{ url_for('main.index') }}" class="nav-link">Accueil</a>
+                <a href="{{ url_for('perfumes.list_perfumes') }}" class="nav-link">Parfums</a>
+                <a href="{{ url_for('main.brands') }}" class="nav-link">Marques</a>
+                <a href="{{ url_for('main.stats') }}" class="nav-link">Statistiques</a>
+            </div>
+            
+            <!-- Barre de recherche -->
+            <div class="navbar-search">
+                <form action="{{ url_for('main.search') }}" method="get" class="search-form">
+                    <input 
+                        type="text" 
+                        name="q" 
+                        placeholder="Rechercher un parfum..." 
+                        class="search-input"
+                        value="{{ request.args.get('q', '') }}"
+                    >
+                    <button type="submit" class="search-button">🔍</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Contenu Principal -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>{{ app_name }}</h3>
+                    <p>Explorez et découvrez des milliers de parfums.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Navigation</h4>
+                    <ul>
+                        <li><a href="{{ url_for('main.index') }}">Accueil</a></li>
+                        <li><a href="{{ url_for('perfumes.list_perfumes') }}">Parfums</a></li>
+                        <li><a href="{{ url_for('main.brands') }}">Marques</a></li>
+                        <li><a href="{{ url_for('main.stats') }}">Statistiques</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>API</h4>
+                    <ul>
+                        <li><a href="{{ url_for('api.api_perfumes') }}">API Parfums</a></li>
+                        <li><a href="{{ url_for('api.api_brands') }}">API Marques</a></li>
+                        <li><a href="{{ url_for('api.api_stats') }}">API Stats</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>À propos</h4>
+                    <p>Données scrappées depuis Fragrantica.com</p>
+                    <p class="version">Version {{ app_version }}</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 {{ app_name }}. Projet éducatif.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

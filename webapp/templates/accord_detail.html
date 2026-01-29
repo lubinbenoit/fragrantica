@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Accord {{ accord_name }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="{{ url_for('main.index') }}">Accueil</a> /
+        <a href="{{ url_for('main.stats') }}">Statistiques</a> /
+        <span>Accord {{ accord_name | title }}</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="accord-header">
+        <h1>🎨 Accord {{ accord_name | title }}</h1>
+        <p class="accord-count">
+            {{ results.total | format_number }} parfum{{ 's' if results.total > 1 else '' }} 
+            contenant cet accord
+        </p>
+    </div>
+
+    <!-- Parfums -->
+    <div class="perfumes-grid">
+        {% for perfume in results.perfumes %}
+        <div class="perfume-card">
+            <div class="perfume-card-header">
+                <h3 class="perfume-name">{{ perfume.name }}</h3>
+                <p class="perfume-brand">
+                    <a href="{{ url_for('main.brand_detail', brand_name=perfume.brand) }}">
+                        {{ perfume.brand }}
+                    </a>
+                </p>
+            </div>
+            
+            <div class="perfume-accords">
+                {% if perfume.accords.get(accord_name) %}
+                <span class="accord-badge-primary">
+                    {{ accord_name }} ({{ perfume.accords[accord_name] | percentage }})
+                </span>
+                {% endif %}
+                {% for accord, value in perfume.sorted_accords if accord != accord_name %}
+                    {% if loop.index <= 3 %}
+                    <span class="accord-badge">{{ accord }}</span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            
+            <div class="perfume-card-footer">
+                <a href="{{ url_for('perfumes.perfume_detail', perfume_id=perfume.id) }}" 
+                   class="btn btn-primary">
+                    Voir détails
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="no-results">
+            <p>Aucun parfum trouvé avec cet accord.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if results.pages > 1 %}
+    <nav class="pagination">
+        {% if results.page > 1 %}
+        <a href="?page={{ results.page - 1 }}" class="btn btn-secondary">
+            ← Précédent
+        </a>
+        {% endif %}
+        
+        <span class="pagination-info">
+            Page {{ results.page }} sur {{ results.pages }}
+        </span>
+        
+        {% if results.page < results.pages %}
+        <a href="?page={{ results.page + 1 }}" class="btn btn-secondary">
+            Suivant →
+        </a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+.accord-header {
+    text-align: center;
+    padding: 3rem 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: var(--border-radius);
+    margin-bottom: 3rem;
+}
+
+.accord-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.accord-count {
+    font-size: 1.25rem;
+    opacity: 0.9;
+}
+</style>
+{% endblock %}

@@ -1,17 +1,16 @@
 # docker-compose.yml
-# version: '3.8' (obsolète)
+# Configuration Docker Compose avec webapp Flask
 
 services:
+  # ═══════════════════════════════════════════════════════════
   # Service MongoDB
+  # ═══════════════════════════════════════════════════════════
   mongodb:
     image: mongo:7.0
     container_name: fragrantica_mongodb
     restart: unless-stopped
-    # ✅ Ne plus exposer le port publiquement
-    # ports:
-    #   - "27017:27017"  # ❌ Retiré pour éviter conflits
     expose:
-      - "27017"  # ✅ Accessible uniquement depuis le réseau Docker
+      - "27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password123}
@@ -27,7 +26,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # Service Mongo Express (Interface Web)
+  # ═══════════════════════════════════════════════════════════
+  # Service Mongo Express (Interface Web MongoDB)
+  # ═══════════════════════════════════════════════════════════
   mongo-express:
     image: mongo-express:latest
     container_name: fragrantica_mongo_express
@@ -46,7 +47,9 @@ services:
     networks:
       - fragrantica_network
 
-  # Service Scrapy (votre application)
+  # ═══════════════════════════════════════════════════════════
+  # Service Scrapy (Scraping)
+  # ═══════════════════════════════════════════════════════════
   scraper:
     build:
       context: .
@@ -54,13 +57,11 @@ services:
     container_name: fragrantica_scraper
     restart: "no"
     environment:
-      # MongoDB via le nom du service Docker
       MONGO_URI: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-password123}@mongodb:27017/
       MONGO_DATABASE: ${MONGO_DATABASE:-fragrantica}
       PYTHONPATH: /app
       PYTHONUNBUFFERED: 1
     volumes:
-      # Montage des données pour persistance
       - ./data:/app/data
       - ./crawls:/app/crawls
       - ./logs:/app/logs
@@ -71,12 +72,53 @@ services:
       - fragrantica_network
     command: ["run_scrapers.py"]
 
+  # ═══════════════════════════════════════════════════════════
+  # Service Flask (Application Web) ← NOUVEAU
+  # ═══════════════════════════════════════════════════════════
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile.webapp
+    container_name: fragrantica_webapp
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      MONGO_URI: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-password123}@mongodb:27017/
+      MONGO_DATABASE: ${MONGO_DATABASE:-fragrantica}
+      FLASK_ENV: ${FLASK_ENV:-production}
+      FLASK_DEBUG: ${FLASK_DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      PYTHONPATH: /app
+      PYTHONUNBUFFERED: 1
+    volumes:
+      # En développement, monter le code pour hot reload
+      - ./webapp:/app/webapp
+      - ./scripts:/app/scripts
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - fragrantica_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# ═══════════════════════════════════════════════════════════
+# Volumes persistants
+# ═══════════════════════════════════════════════════════════
 volumes:
   mongodb_data:
     driver: local
   mongodb_config:
     driver: local
 
+# ═══════════════════════════════════════════════════════════
+# Réseau interne
+# ═══════════════════════════════════════════════════════════
 networks:
   fragrantica_network:
     driver: bridge

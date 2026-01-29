@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Marques - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">📚 Toutes les marques</h1>
+    <p class="page-subtitle">
+        {{ brands.total_brands | format_number }} marques disponibles
+    </p>
+
+    <!-- Top 10 Marques -->
+    <section class="section">
+        <h2 class="section-title">🏆 Top 10</h2>
+        <div class="brands-top">
+            {% for brand in brands.top_brands %}
+            <div class="brand-top-card">
+                <div class="brand-rank">{{ loop.index }}</div>
+                <div class="brand-info">
+                    <a href="{{ url_for('main.brand_detail', brand_name=brand.name) }}" 
+                       class="brand-link">
+                        <h3>{{ brand.name }}</h3>
+                        <p>{{ brand.count | format_number }} parfums</p>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Toutes les marques (Liste alphabétique) -->
+    <section class="section">
+        <h2 class="section-title">📋 Liste complète</h2>
+        
+        <!-- Recherche -->
+        <div class="brands-search">
+            <input type="text" 
+                   id="brandSearch" 
+                   placeholder="Rechercher une marque..." 
+                   class="search-input">
+        </div>
+
+        <!-- Liste -->
+        <div class="brands-list" id="brandsList">
+            {% for brand in brands.all_brands %}
+            <a href="{{ url_for('main.brand_detail', brand_name=brand) }}" 
+               class="brand-list-item"
+               data-brand="{{ brand | lower }}">
+                {{ brand }}
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<style>
+.page-title {
+    text-align: center;
+    font-size: 2.5rem;
+    margin: 2rem 0 1rem;
+    color: var(--dark-color);
+}
+
+.page-subtitle {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-bottom: 3rem;
+}
+
+.brands-top {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.brand-top-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: var(--transition);
+}
+
+.brand-top-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.brand-rank {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.brand-info {
+    flex: 1;
+}
+
+.brand-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.brand-info h3 {
+    font-size: 1.25rem;
+    color: var(--dark-color);
+    margin-bottom: 0.25rem;
+}
+
+.brand-info p {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.brands-search {
+    margin-bottom: 2rem;
+}
+
+.brands-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.75rem;
+}
+
+.brand-list-item {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius);
+    border: 2px solid var(--border-color);
+    color: var(--dark-color);
+    font-weight: 500;
+    transition: var(--transition);
+    display: block;
+}
+
+.brand-list-item:hover {
+    border-color: var(--primary-color);
+    background: var(--light-color);
+    color: var(--primary-color);
+}
+
+.brand-list-item.hidden {
+    display: none;
+}
+</style>
+
+<script>
+// Recherche en temps réel
+document.getElementById('brandSearch').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('.brand-list-item');
+    
+    items.forEach(item => {
+        const brandName = item.dataset.brand;
+        if (brandName.includes(query)) {
+            item.classList.remove('hidden');
+        } else {
+            item.classList.add('hidden');
+        }
+    });
+});
+</script>
+{% endblock %}

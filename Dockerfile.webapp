@@ -1,0 +1,43 @@
+# Dockerfile.webapp
+# Image Docker pour l'application Flask
+
+FROM python:3.11-slim
+
+# Métadonnées
+LABEL maintainer="Fragrantica Team"
+LABEL description="Flask web application for Fragrantica data"
+
+# Variables d'environnement
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    FLASK_APP=webapp.app:app \
+    FLASK_ENV=production
+
+# Créer le répertoire de travail
+WORKDIR /app
+
+# Copier les requirements et installer les dépendances
+COPY requirements-webapp.txt .
+RUN pip install --no-cache-dir -r requirements-webapp.txt
+
+# Copier le code de l'application
+COPY webapp/ ./webapp/
+COPY scripts/ ./scripts/
+
+# Créer un utilisateur non-root pour la sécurité
+RUN useradd -m -u 1000 flaskuser && \
+    chown -R flaskuser:flaskuser /app
+
+USER flaskuser
+
+# Exposer le port Flask
+EXPOSE 5000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/stats')" || exit 1
+
+# Commande de démarrage
+# En développement: flask run
+# En production: gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "webapp.app:app"]

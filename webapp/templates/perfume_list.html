@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Parfums{% if brand %} - {{ brand }}{% endif %} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1>
+            🌸 Parfums
+            {% if brand %}
+            <small>de {{ brand }}</small>
+            {% endif %}
+        </h1>
+        <p class="page-subtitle">
+            {{ results.total | format_number }} parfum{{ 's' if results.total > 1 else '' }} trouvé{{ 's' if results.total > 1 else '' }}
+        </p>
+    </div>
+
+    <!-- Filtres (optionnel - à développer) -->
+    {% if brand %}
+    <div class="filters">
+        <a href="{{ url_for('perfumes.list_perfumes') }}" class="btn btn-secondary">
+            Voir tous les parfums
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Grille de parfums -->
+    <div class="perfumes-grid">
+        {% for perfume in results.perfumes %}
+        <div class="perfume-card">
+            <div class="perfume-card-header">
+                <h3 class="perfume-name">{{ perfume.name }}</h3>
+                <p class="perfume-brand">
+                    <a href="{{ url_for('main.brand_detail', brand_name=perfume.brand) }}">
+                        {{ perfume.brand }}
+                    </a>
+                </p>
+            </div>
+            
+            <div class="perfume-accords">
+                {% for accord, value in perfume.sorted_accords[:3] %}
+                <span class="accord-badge" style="opacity: {{ value / 100 }}">
+                    {{ accord }}
+                </span>
+                {% endfor %}
+                {% if perfume.sorted_accords | length > 3 %}
+                <span class="accord-badge">+{{ perfume.sorted_accords | length - 3 }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="perfume-card-footer">
+                <a href="{{ url_for('perfumes.perfume_detail', perfume_id=perfume.id) }}" 
+                   class="btn btn-primary">
+                    Voir détails
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="no-results">
+            <p>Aucun parfum trouvé.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if results.pages > 1 %}
+    <nav class="pagination">
+        {% if results.page > 1 %}
+        <a href="?page={{ results.page - 1 }}{% if brand %}&brand={{ brand }}{% endif %}" 
+           class="btn btn-secondary">
+            ← Précédent
+        </a>
+        {% endif %}
+        
+        <span class="pagination-info">
+            Page {{ results.page }} sur {{ results.pages }}
+        </span>
+        
+        {% if results.page < results.pages %}
+        <a href="?page={{ results.page + 1 }}{% if brand %}&brand={{ brand }}{% endif %}" 
+           class="btn btn-secondary">
+            Suivant →
+        </a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+.page-header {
+    text-align: center;
+    margin: 2rem 0 3rem;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    color: var(--dark-color);
+}
+
+.page-header h1 small {
+    font-size: 1.5rem;
+    color: var(--text-light);
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-top: 0.5rem;
+}
+
+.filters {
+    margin-bottom: 2rem;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin: 3rem 0;
+}
+
+.pagination-info {
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-light);
+}
+</style>
+{% endblock %}

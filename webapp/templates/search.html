@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Recherche{% if query %} - {{ query }}{% endif %} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="search-page">
+        <!-- Header de recherche -->
+        <div class="search-header">
+            <h1>🔍 Recherche</h1>
+            
+            <!-- Formulaire de recherche -->
+            <form action="{{ url_for('main.search') }}" method="get" class="search-form-large">
+                <input type="text" 
+                       name="q" 
+                       value="{{ query }}" 
+                       placeholder="Rechercher un parfum ou une marque..." 
+                       class="search-input-large"
+                       autofocus>
+                <button type="submit" class="search-button-large">
+                    Rechercher
+                </button>
+            </form>
+        </div>
+
+        {% if query %}
+            {% if results and results.total > 0 %}
+            <!-- Résultats -->
+            <div class="search-results">
+                <p class="results-count">
+                    {{ results.total | format_number }} résultat{{ 's' if results.total > 1 else '' }}
+                    pour <strong>"{{ query }}"</strong>
+                </p>
+                
+                <div class="perfumes-grid">
+                    {% for perfume in results.perfumes %}
+                    <div class="perfume-card">
+                        <div class="perfume-card-header">
+                            <h3 class="perfume-name">{{ perfume.name }}</h3>
+                            <p class="perfume-brand">
+                                <a href="{{ url_for('main.brand_detail', brand_name=perfume.brand) }}">
+                                    {{ perfume.brand }}
+                                </a>
+                            </p>
+                        </div>
+                        
+                        <div class="perfume-accords">
+                            {% if perfume.dominant_accord %}
+                            <span class="accord-badge-primary">
+                                {{ perfume.dominant_accord[0] }}
+                            </span>
+                            {% endif %}
+                            {% for accord, value in perfume.sorted_accords[1:4] %}
+                            <span class="accord-badge">{{ accord }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="perfume-card-footer">
+                            <a href="{{ url_for('perfumes.perfume_detail', perfume_id=perfume.id) }}" 
+                               class="btn btn-primary">
+                                Voir détails
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if results.pages > 1 %}
+                <nav class="pagination">
+                    {% if results.page > 1 %}
+                    <a href="?q={{ query }}&page={{ results.page - 1 }}" class="btn btn-secondary">
+                        ← Précédent
+                    </a>
+                    {% endif %}
+                    
+                    <span class="pagination-info">
+                        Page {{ results.page }} sur {{ results.pages }}
+                    </span>
+                    
+                    {% if results.page < results.pages %}
+                    <a href="?q={{ query }}&page={{ results.page + 1 }}" class="btn btn-secondary">
+                        Suivant →
+                    </a>
+                    {% endif %}
+                </nav>
+                {% endif %}
+            </div>
+            {% else %}
+            <!-- Aucun résultat -->
+            <div class="no-results-message">
+                <h2>😕 Aucun résultat</h2>
+                <p>Aucun parfum trouvé pour <strong>"{{ query }}"</strong></p>
+                <p>Suggestions :</p>
+                <ul>
+                    <li>Vérifiez l'orthographe</li>
+                    <li>Essayez des termes plus généraux</li>
+                    <li>Recherchez par nom de marque</li>
+                </ul>
+                <a href="{{ url_for('main.brands') }}" class="btn btn-primary">
+                    Parcourir les marques
+                </a>
+            </div>
+            {% endif %}
+        {% else %}
+        <!-- Message initial -->
+        <div class="search-suggestions">
+            <h2>🌸 Suggestions</h2>
+            <p>Essayez de rechercher :</p>
+            <div class="suggestion-tags">
+                <a href="?q=Dior" class="suggestion-tag">Dior</a>
+                <a href="?q=Chanel" class="suggestion-tag">Chanel</a>
+                <a href="?q=woody" class="suggestion-tag">Woody</a>
+                <a href="?q=floral" class="suggestion-tag">Floral</a>
+                <a href="?q=vanilla" class="suggestion-tag">Vanilla</a>
+            </div>
+            
+            <div class="or-divider">ou</div>
+            
+            <a href="{{ url_for('main.brands') }}" class="btn btn-large btn-primary">
+                Parcourir toutes les marques
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.search-page {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.search-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.search-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    color: var(--dark-color);
+}
+
+.search-form-large {
+    display: flex;
+    gap: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.search-input-large {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1.1rem;
+    transition: var(--transition);
+}
+
+.search-input-large:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.search-button-large {
+    padding: 1rem 2rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.search-button-large:hover {
+    background: var(--secondary-color);
+}
+
+.results-count {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-bottom: 2rem;
+}
+
+.no-results-message {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.no-results-message h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--dark-color);
+}
+
+.no-results-message ul {
+    text-align: left;
+    max-width: 300px;
+    margin: 1.5rem auto;
+    color: var(--text-light);
+}
+
+.search-suggestions {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.search-suggestions h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    color: var(--dark-color);
+}
+
+.suggestion-tags {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 2rem 0;
+}
+
+.suggestion-tag {
+    background: var(--light-color);
+    color: var(--text-color);
+    padding: 0.75rem 1.5rem;
+    border-radius: 999px;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.suggestion-tag:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.or-divider {
+    margin: 2rem 0;
+    color: var(--text-light);
+    font-style: italic;
+}
+</style>
+{% endblock %}
