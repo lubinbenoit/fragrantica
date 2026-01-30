@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}{{ perfume.name }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="{{ url_for('main.index') }}">Accueil</a> /
+        <a href="{{ url_for('perfumes.list_perfumes') }}">Parfums</a> /
+        <a href="{{ url_for('main.brand_detail', brand_name=perfume.brand) }}">{{ perfume.brand }}</a> /
+        <span>{{ perfume.name }}</span>
+    </nav>
+
+    <!-- Détails du Parfum -->
+    <div class="perfume-detail">
+        <div class="perfume-header">
+            <h1 class="perfume-title">{{ perfume.name }}</h1>
+            <h2 class="perfume-brand-title">
+                <a href="{{ url_for('main.brand_detail', brand_name=perfume.brand) }}">
+                    {{ perfume.brand }}
+                </a>
+            </h2>
+        </div>
+
+        <div class="perfume-content">
+            <!-- Informations Principales -->
+            <div class="perfume-main">
+                <!-- Accords -->
+                <section class="detail-section">
+                    <h3>🎨 Accords Olfactifs</h3>
+                    <div class="accords-list">
+                        {% for accord, value in perfume.sorted_accords %}
+                        <div class="accord-item">
+                            <div class="accord-info">
+                                <span class="accord-name">{{ accord | title }}</span>
+                                <span class="accord-value">{{ value | percentage }}</span>
+                            </div>
+                            <div class="accord-bar">
+                                <div class="accord-fill" 
+                                     style="width: {{ value }}%; background: hsl({{ loop.index0 * 30 }}, 70%, 60%)">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Accord Dominant -->
+                {% if perfume.dominant_accord %}
+                <section class="detail-section">
+                    <h3>⭐ Accord Dominant</h3>
+                    <div class="dominant-accord">
+                        <span class="accord-badge-large">
+                            {{ perfume.dominant_accord[0] | title }}
+                        </span>
+                        <span class="accord-score">
+                            Score: {{ perfume.dominant_accord[1] | percentage }}
+                        </span>
+                    </div>
+                </section>
+                {% endif %}
+
+                <!-- Actions -->
+                <section class="detail-section">
+                    <h3>🔗 Liens</h3>
+                    <div class="action-buttons">
+                        <a href="{{ perfume.url }}" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="btn btn-primary">
+                            Voir sur Fragrantica ↗
+                        </a>
+                        <a href="{{ url_for('main.accord_detail', accord_name=perfume.dominant_accord[0]) }}" 
+                           class="btn btn-secondary">
+                            Parfums similaires
+                        </a>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="perfume-sidebar">
+                <!-- Informations Techniques -->
+                <div class="info-box">
+                    <h4>ℹ️ Informations</h4>
+                    <dl class="info-list">
+                        <dt>Marque</dt>
+                        <dd>
+                            <a href="{{ url_for('main.brand_detail', brand_name=perfume.brand) }}">
+                                {{ perfume.brand }}
+                            </a>
+                        </dd>
+                        
+                        <dt>ID Parfum</dt>
+                        <dd>{{ perfume.perfume_id or 'N/A' }}</dd>
+                        
+                        <dt>Nombre d'accords</dt>
+                        <dd>{{ perfume.sorted_accords | length }}</dd>
+                    </dl>
+                </div>
+
+                <!-- Parfums Similaires -->
+                {% if similar_perfumes %}
+                <div class="info-box">
+                    <h4>🎭 De la même marque</h4>
+                    <div class="similar-perfumes">
+                        {% for similar in similar_perfumes %}
+                        <a href="{{ url_for('perfumes.perfume_detail', perfume_id=similar.id) }}"
+                           class="similar-perfume-link">
+                            <strong>{{ similar.name }}</strong>
+                            {% if similar.dominant_accord %}
+                            <small>{{ similar.dominant_accord[0] }}</small>
+                            {% endif %}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="detail-footer">
+        <a href="{{ url_for('perfumes.list_perfumes') }}" class="btn btn-secondary">
+            ← Retour à la liste
+        </a>
+        <a href="{{ url_for('main.brand_detail', brand_name=perfume.brand) }}" class="btn btn-secondary">
+            Tous les parfums {{ perfume.brand }}
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Animation des barres d'accords
+document.addEventListener('DOMContentLoaded', () => {
+    const bars = document.querySelectorAll('.accord-fill');
+    bars.forEach((bar, index) => {
+        bar.style.animation = `fillBar 1s ease-out ${index * 0.1}s forwards`;
+    });
+});
+</script>
+{% endblock %}

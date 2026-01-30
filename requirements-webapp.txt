@@ -1,0 +1,21 @@
+# Requirements pour l'application Flask
+# Version: 1.0.0
+
+# Flask Framework
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# MongoDB
+pymongo==4.6.1
+
+# Configuration
+python-dotenv==1.0.0
+
+# Utilitaires
+blinker==1.7.0
+
+# Production (optionnel)
+gunicorn==21.2.0
+
+# Cache (optionnel)
+Flask-Caching==2.1.0

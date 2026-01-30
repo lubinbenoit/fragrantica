@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>🌸 Bienvenue sur Fragrantica Explorer</h1>
+        <p class="hero-subtitle">
+            Explorez notre collection de <strong>{{ stats.total_perfumes | format_number }}</strong> parfums
+        </p>
+        
+        <!-- Statistiques Rapides -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.total_perfumes | format_number }}</div>
+                <div class="stat-label">Parfums</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.total_urls | format_number }}</div>
+                <div class="stat-label">URLs collectées</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.progress | percentage }}</div>
+                <div class="stat-label">Progression</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.remaining | format_number }}</div>
+                <div class="stat-label">Restants</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Parfums Mis en Avant -->
+    <section class="section">
+        <h2 class="section-title">✨ Sélection du jour</h2>
+        <div class="perfumes-grid">
+            {% for perfume in featured_perfumes %}
+            <div class="perfume-card">
+                <div class="perfume-card-header">
+                    <h3 class="perfume-name">{{ perfume.name }}</h3>
+                    <p class="perfume-brand">{{ perfume.brand }}</p>
+                </div>
+                
+                <div class="perfume-accords">
+                    {% for accord, value in perfume.sorted_accords[:3] %}
+                    <span class="accord-badge" style="opacity: {{ value / 100 }}">
+                        {{ accord }}
+                    </span>
+                    {% endfor %}
+                </div>
+                
+                <div class="perfume-card-footer">
+                    <a href="{{ url_for('perfumes.perfume_detail', perfume_id=perfume.id) }}" 
+                       class="btn btn-primary">
+                        Voir détails
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Derniers Ajouts -->
+    <section class="section">
+        <h2 class="section-title">🆕 Derniers ajouts</h2>
+        <div class="perfumes-grid">
+            {% for perfume in latest_perfumes %}
+            <div class="perfume-card">
+                <div class="perfume-card-header">
+                    <h3 class="perfume-name">{{ perfume.name }}</h3>
+                    <p class="perfume-brand">
+                        <a href="{{ url_for('main.brand_detail', brand_name=perfume.brand) }}">
+                            {{ perfume.brand }}
+                        </a>
+                    </p>
+                </div>
+                
+                <div class="perfume-accords">
+                    {% if perfume.dominant_accord %}
+                    <span class="accord-badge-primary">
+                        {{ perfume.dominant_accord[0] }}
+                        <small>({{ perfume.dominant_accord[1] | percentage }})</small>
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="perfume-card-footer">
+                    <a href="{{ url_for('perfumes.perfume_detail', perfume_id=perfume.id) }}" 
+                       class="btn btn-secondary">
+                        Découvrir
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="section-footer">
+            <a href="{{ url_for('perfumes.list_perfumes') }}" class="btn btn-large">
+                Voir tous les parfums →
+            </a>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section">
+        <h2>Explorez notre collection</h2>
+        <p>Découvrez des parfums par marque, accord, ou utilisez notre recherche</p>
+        <div class="cta-buttons">
+            <a href="{{ url_for('main.brands') }}" class="btn btn-primary btn-large">
+                📚 Parcourir les marques
+            </a>
+            <a href="{{ url_for('main.stats') }}" class="btn btn-secondary btn-large">
+                📊 Voir les statistiques
+            </a>
+        </div>
+    </section>
+</div>
+{% endblock %}
