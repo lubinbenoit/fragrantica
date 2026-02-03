@@ -6,7 +6,7 @@
 <div class="container">
     <!-- Hero Section -->
     <section class="hero">
-        <h1>🌸 Bienvenue sur Fragrantica Explorer</h1>
+        <h1> Bienvenue sur Fragrantica Explorer</h1>
         <p class="hero-subtitle">
             Explorez notre collection de <strong>{{ stats.total_perfumes | format_number }}</strong> parfums
         </p>
@@ -38,6 +38,7 @@
         <div class="perfumes-grid">
             {% for perfume in featured_perfumes %}
             <div class="perfume-card">
+
                 <div class="perfume-card-header">
                     <h3 class="perfume-name">{{ perfume.name }}</h3>
                     <p class="perfume-brand">{{ perfume.brand }}</p>
