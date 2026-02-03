@@ -41,12 +41,15 @@
             
             <div class="perfume-accords">
                 {% for accord, value in perfume.sorted_accords[:3] %}
-                <span class="accord-badge" style="opacity: {{ value / 100 }}">
-                    {{ accord }}
+                <span class="accord-badge" style="background-color: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 12px; font-size: 0.85em; margin-right: 4px;">
+                    {{ accord }} ({{ value | round(1) }}%)
                 </span>
                 {% endfor %}
+                
                 {% if perfume.sorted_accords | length > 3 %}
-                <span class="accord-badge">+{{ perfume.sorted_accords | length - 3 }}</span>
+                <span class="accord-badge" style="color: gray; font-size: 0.8em;">
+                    +{{ perfume.sorted_accords | length - 3 }}
+                </span>
                 {% endif %}
             </div>
             
