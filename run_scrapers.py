@@ -57,7 +57,7 @@ def run_command(cmd, description):
 def get_mongo_stats():
     """Affiche les statistiques MongoDB."""
     try:
-        # ✅ Valeur par défaut Docker-friendly
+        # Valeur par défaut Docker-friendly
         mongo_uri = os.getenv(
             'MONGO_URI', 
             'mongodb://admin:password123@mongodb:27017/'
@@ -116,7 +116,7 @@ def get_mongo_stats():
 def check_mongodb():
     """Vérifie que MongoDB est accessible."""
     try:
-        # ✅ Valeur par défaut Docker-friendly
+        # Valeur par défaut Docker-friendly
         mongo_uri = os.getenv(
             'MONGO_URI', 
             'mongodb://admin:password123@mongodb:27017/'
