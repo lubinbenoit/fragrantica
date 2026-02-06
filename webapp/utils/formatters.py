@@ -5,20 +5,35 @@ Fonctions utilitaires pour formater les données.
 
 def format_accords(accords_dict):
     """
-    Formate les accords pour l'affichage.
+    Formate les accords pour l'affichage en calculant le pourcentage relatif au total.
     Trie par valeur décroissante et retourne une liste de tuples.
     
     Args:
         accords_dict (dict): Dictionnaire des accords {"accord": value}
     
     Returns:
-        list: Liste triée de tuples (accord, value)
+        list: Liste triée de tuples (accord, percent)
     """
     if not accords_dict:
         return []
     
+    # 1. Calculer la somme totale des scores de tous les accords
+    total_score = sum(accords_dict.values())
+    
+    # Sécurité pour éviter la division par zéro
+    if total_score == 0:
+        return []
+
+    # 2. Recalculer chaque valeur en pourcentage du total
+    # Ex: Si Iris=100 et Total=200, alors Iris devient 50.0
+    normalized_accords = []
+    for accord, score in accords_dict.items():
+        percent = (score / total_score) * 100
+        normalized_accords.append((accord, percent))
+
+    # 3. Trier et retourner
     return sorted(
-        accords_dict.items(),
+        normalized_accords,
         key=lambda x: x[1],
         reverse=True
     )

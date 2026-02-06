@@ -11,12 +11,13 @@ class PerfumeSpider(scrapy.Spider):
     
     custom_settings = {
         'ROBOTSTXT_OBEY': False,
-        'CONCURRENT_REQUESTS': 6,
+        'CONCURRENT_REQUESTS': 16,
         'DOWNLOAD_DELAY': 1,
         'RANDOMIZE_DOWNLOAD_DELAY': True,
         'AUTOTHROTTLE_ENABLED': True,
-        'AUTOTHROTTLE_START_DELAY': 3,
-        'AUTOTHROTTLE_MAX_DELAY': 20,
+        'AUTOTHROTTLE_START_DELAY': 1,
+        'AUTOTHROTTLE_MAX_DELAY': 10,
+        'AUTOTHROTTLE_TARGET_CONCURRENCY': 4.0,
         'COOKIES_ENABLED': True,
         'RETRY_ENABLED': False,
         'DOWNLOADER_MIDDLEWARES': {
@@ -107,6 +108,16 @@ class PerfumeSpider(scrapy.Spider):
         else:
             item["name"] = "Unknown"
             item["brand"] = response.meta.get("designer", "Unknown")
+
+        # Récupération de l'IMAGE
+        # On essaie d'abord la balise meta "og:image" 
+        image_url = response.css('meta[property="og:image"]::attr(content)').get()
+        
+        # Si ça ne marche pas, on essaie le standard Schema.org
+        if not image_url:
+            image_url = response.css('img[itemprop="image"]::attr(src)').get()
+            
+        item["image_url"] = image_url
         
         accords = {}
         for bar in response.css("div.flex.flex-col.w-full > div.w-full > div"):
@@ -118,7 +129,9 @@ class PerfumeSpider(scrapy.Spider):
         
         item["accords"] = accords
         
-        self.logger.info(f"✓ Scraped: {item['brand']} - {item['name']}")
+        # Log pour vérifier si ça marche
+        img_status = "OUI" if image_url else "NON"
+        self.logger.info(f"✓ Scraped: {item['name']} [Image: {img_status}]")
         
         yield item
     

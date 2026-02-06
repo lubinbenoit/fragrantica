@@ -21,6 +21,7 @@ COPY scrapy.cfg .
 COPY fragrantica_scraper/ ./fragrantica_scraper/
 COPY scripts/ ./scripts/
 COPY run_scrapers.py .
+#COPY test_mongo.py .
 
 # Créer les dossiers nécessaires
 RUN mkdir -p data crawls logs

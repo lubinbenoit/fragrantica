@@ -6,3 +6,5 @@ class FragranticaPerfumeItem(scrapy.Item):
     brand = scrapy.Field()
     accords = scrapy.Field()  # dict {accord: pourcentage}
     url = scrapy.Field()
+
+    image_url = scrapy.Field() # URL de l'image du parfum
