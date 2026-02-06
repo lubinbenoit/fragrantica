@@ -26,6 +26,13 @@
         <div class="perfume-content">
             <!-- Informations Principales -->
             <div class="perfume-main">
+            <div class="detail-image-container">
+                    {% if perfume.image_url %}
+                        <img src="{{ perfume.image_url }}" alt="{{ perfume.name }}" class="detail-img">
+                    {% else %}
+                        <div style="font-size: 5rem; color: #cbd5e1;">🌸</div>
+                    {% endif %}
+                </div>
                 <!-- Accords -->
                 <section class="detail-section">
                     <h3>🎨 Accords Olfactifs</h3>
