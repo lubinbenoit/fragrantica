@@ -33,11 +33,11 @@ class PerfumeURLsSpider(scrapy.Spider):
         self.skip_existing = skip_existing
         self.got_429 = False
         
-        # ✅ NE PAS charger le cache ici - self.settings n'existe pas encore
+        # NE PAS charger le cache ici - self.settings n'existe pas encore
         self.scraped_designers = set()
         self.existing_urls = set()
     
-    # ✅ NOUVEAU : Charger le cache quand le spider démarre
+    # Charger le cache quand le spider démarre
     def start_requests(self):
         """Charge le cache avant de démarrer le scraping."""
         if self.skip_existing:
@@ -48,13 +48,13 @@ class PerfumeURLsSpider(scrapy.Spider):
                 f"and {len(self.existing_urls)} existing URLs from MongoDB"
             )
         
-        # ✅ Maintenant on peut démarrer les requêtes normalement
+        # Démarrer les requêtes normalement
         for url in self.start_urls:
             yield scrapy.Request(url, callback=self.parse)
     
     def _get_mongo_connection(self):
         """Crée une connexion MongoDB avec les bons paramètres."""
-        # ✅ Maintenant self.settings existe
+        # self.settings existe
         mongo_uri = self.settings.get(
             'MONGO_URI', 
             'mongodb://admin:password123@mongodb:27017/'
@@ -191,11 +191,8 @@ class PerfumeURLsSpider(scrapy.Spider):
             self.got_429 = True
             return
         
-        designer = response.css("h1::text").get()
-        if designer:
-            designer = designer.replace(" perfumes and colognes", "").strip()
-        else:
-            designer = response.meta.get("designer", "Unknown")
+        # 🔥 ON NE RÉCUPÈRE PLUS LE NOM DU DESIGNER
+        designer = response.meta.get("designer", "Unknown")  # Juste pour les logs
         
         perfume_links = list(set(
             response.xpath('//a[contains(@href, "/perfume/")]/@href').getall()
@@ -208,33 +205,23 @@ class PerfumeURLsSpider(scrapy.Spider):
         
         for link in perfume_links[:self.max_urls_per_designer]:
             full_url = response.urljoin(link)
-            
-            # ✅ Normaliser l'URL pour éviter les doublons
             normalized_url = full_url.rstrip('/').split('?')[0]
             
-            # Vérifier si l'URL existe déjà
             if normalized_url not in self.existing_urls:
                 new_urls.append(normalized_url)
-                # Ajouter au set local pour éviter les doublons dans cette session
                 self.existing_urls.add(normalized_url)
                 
                 yield {
-                    "designer": designer,
                     "perfume_url": normalized_url
                 }
             else:
                 duplicate_count += 1
         
-        # Log précis
+        # Log
         if new_urls:
             self.logger.info(
                 f"{designer}: {len(new_urls)} new URLs collected "
-                f"({duplicate_count} already in DB, total found: {len(perfume_links)})"
-            )
-        else:
-            self.logger.info(
-                f"{designer}: 0 new URLs - all {duplicate_count} already in DB "
-                f"(total found: {len(perfume_links)})"
+                f"({duplicate_count} already in DB)"
             )
     
     def handle_error(self, failure):
