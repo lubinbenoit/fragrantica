@@ -68,9 +68,9 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Container */
 .container {
-    max-width: 1200px;
+    max-width: 95%; /* Légèrement plus large  */
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: 0 2rem;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -393,8 +393,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .perfume-content {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 3rem;
+    /* On change le ratio : 65% pour le contenu principal, 35% pour la barre latérale */
+    grid-template-columns: 2fr 1fr; 
+    gap: 3rem; /* Plus d'espace entre les deux colonnes */
+    align-items: start; /* Aligne tout en haut */
 }
 
 .detail-section h3 {
@@ -569,4 +571,32 @@ h1, h2, h3, h4, h5, h6 {
     .hero h1 {
         font-size: 1.75rem;
     }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Image Page Détail
+   ═══════════════════════════════════════════════════════════ */
+
+.detail-image-container {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    overflow: hidden; /* COUPE tout ce qui dépasse, sécurité ultime */
+}
+
+.detail-img {
+    width: 100%;       /* FORCE l'image à faire la largeur de la boite, pas plus */
+    height: auto;      /* Garde les proportions (ne pas écraser l'image) */
+    max-width: 800px;  /* On évite qu'elle devienne monstrueuse sur les écrans géants */
+    display: block;    /* Corrige des bugs d'espacement */
+    margin: 0 auto;    /* Centre l'image */
+    object-fit: contain;
+}
+
+.detail-img:hover {
+    transform: scale(1.05) rotate(2deg); /* Petit effet ludique au survol */
 }
