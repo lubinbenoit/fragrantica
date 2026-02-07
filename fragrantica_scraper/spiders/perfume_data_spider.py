@@ -51,7 +51,7 @@ class PerfumeSpider(scrapy.Spider):
             # Charger les URLs
             all_urls = list(db.perfume_urls.find(
                 {}, 
-                {"perfume_url": 1, "designer": 1, "_id": 0}
+                {"perfume_url": 1, "_id": 0}
             ))
             
             # Charger les URLs déjà scrapées
@@ -77,11 +77,9 @@ class PerfumeSpider(scrapy.Spider):
             # Générer les requêtes
             for data in remaining:
                 url = data["perfume_url"]
-                designer = data.get("designer", "Unknown")
                 yield scrapy.Request(
                     url,
                     callback=self.parse_perfume,
-                    meta={"designer": designer},
                     errback=self.handle_error,
                     dont_filter=True
                 )
@@ -100,25 +98,34 @@ class PerfumeSpider(scrapy.Spider):
         item = FragranticaPerfumeItem()
         item["url"] = response.url
         
+        # Nom du parfum
         title = response.css("h1::text").get()
         if title:
             title = title.strip()
             item["name"] = title
-            item["brand"] = response.meta.get("designer", title.split(" ", 1)[0])
         else:
             item["name"] = "Unknown"
-            item["brand"] = response.meta.get("designer", "Unknown")
-
-        # Récupération de l'IMAGE
-        # On essaie d'abord la balise meta "og:image" 
-        image_url = response.css('meta[property="og:image"]::attr(content)').get()
         
-        # Si ça ne marche pas, on essaie le standard Schema.org
+        # SCRAPER LA MARQUE - Sélecteur précis basé sur le HTML fourni
+        brand = response.css('p[itemprop="brand"] span[itemprop="name"]::text').get()
+        
+        # Fallback si le sélecteur ne marche pas
+        if not brand:
+            brand = response.css('p[itemprop="brand"] a span::text').get()
+        
+        # Dernier fallback
+        if not brand:
+            brand = "Unknown"
+        
+        item["brand"] = brand.strip()
+        
+        # Récupération de l'IMAGE
+        image_url = response.css('meta[property="og:image"]::attr(content)').get()
         if not image_url:
             image_url = response.css('img[itemprop="image"]::attr(src)').get()
-            
         item["image_url"] = image_url
         
+        # Accords
         accords = {}
         for bar in response.css("div.flex.flex-col.w-full > div.w-full > div"):
             name = bar.css("span.truncate::text").get()
@@ -129,9 +136,11 @@ class PerfumeSpider(scrapy.Spider):
         
         item["accords"] = accords
         
-        # Log pour vérifier si ça marche
+        # Log
         img_status = "OUI" if image_url else "NON"
-        self.logger.info(f"✓ Scraped: {item['name']} [Image: {img_status}]")
+        self.logger.info(
+            f"✓ Scraped: {item['name']} by {item['brand']} [Image: {img_status}]"
+        )
         
         yield item
     
