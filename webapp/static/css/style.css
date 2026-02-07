@@ -585,13 +585,13 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-md);
     border: 1px solid var(--border-color);
-    overflow: hidden; /* COUPE tout ce qui dépasse, sécurité ultime */
+    overflow: hidden; /* COUPE tout ce qui dépasse pour pas déranger côté info et + */
 }
 
 .detail-img {
     width: 100%;       /* FORCE l'image à faire la largeur de la boite, pas plus */
     height: auto;      /* Garde les proportions (ne pas écraser l'image) */
-    max-width: 800px;  /* On évite qu'elle devienne monstrueuse sur les écrans géants */
+    max-width: 800px;  /* Pour pas qu'elle soit trop grande */
     display: block;    /* Corrige des bugs d'espacement */
     margin: 0 auto;    /* Centre l'image */
     object-fit: contain;
@@ -599,4 +599,11 @@ h1, h2, h3, h4, h5, h6 {
 
 .detail-img:hover {
     transform: scale(1.05) rotate(2deg); /* Petit effet ludique au survol */
+}
+
+/* Espacement pour la section Liens */
+.links-section-title {
+    margin-top: 3rem;       /* Ajoute 3 lignes d'espace vide au-dessus */
+    padding-top: 1.5rem;    /* Un peu d'espace interne */
+    border-top: 1px dashed var(--border-color); /* Une ligne pointillée */
 }
