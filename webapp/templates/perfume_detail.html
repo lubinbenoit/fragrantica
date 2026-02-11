@@ -57,12 +57,9 @@
                 {% if perfume.dominant_accord %}
                 <section class="detail-section">
                     <h3>⭐ Accord Dominant</h3>
-                    <div class="dominant-accord">
-                        <span class="accord-badge-large">
-                            {{ perfume.dominant_accord[0] | title }}
-                        </span>
-                        <span class="accord-score">
-                            {{ perfume.dominant_accord[1] | percentage }}
+                    <div class="dominant-accord" style="margin-top: 10px;">
+                        <span class="accord-badge" style="display: inline-block; background-color: #2563eb; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 1rem; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);">
+                            {{ perfume.dominant_accord[0] | title }} ({{ perfume.dominant_accord[1] | percentage }})
                         </span>
                     </div>
                 </section>
