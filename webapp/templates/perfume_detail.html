@@ -33,11 +33,18 @@
                         <div style="font-size: 5rem; color: #cbd5e1;">🌸</div>
                     {% endif %}
                 </div>
+
                 <!-- Accords -->
                 <section class="detail-section">
                     <h3>🎨 Accords Olfactifs</h3>
                     <div class="accords-list">
+                        
+                        {% set max_val = perfume.sorted_accords[0][1] if perfume.sorted_accords else 100 %}
+
                         {% for accord, value in perfume.sorted_accords %}
+                        
+                        {% set visual_width = (value / max_val) * 100 %}
+
                         <div class="accord-item">
                             <div class="accord-info">
                                 <span class="accord-name">{{ accord | title }}</span>
@@ -45,7 +52,7 @@
                             </div>
                             <div class="accord-bar">
                                 <div class="accord-fill" 
-                                     style="width: {{ value }}%; background: hsl({{ loop.index0 * 30 }}, 70%, 60%)">
+                                     style="width: {{ visual_width }}%; background: hsl({{ loop.index0 * 30 }}, 70%, 60%)">
                                 </div>
                             </div>
                         </div>
