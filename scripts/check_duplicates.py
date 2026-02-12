@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ✅ Utilise la variable d'environnement (mongodb:27017 dans Docker)
+# Utilise la variable d'environnement (mongodb:27017 dans Docker)
 mongo_uri = os.getenv('MONGO_URI', 'mongodb://admin:password123@mongodb:27017/')
 print(f"🔗 Connecting to: {mongo_uri}\n")
 

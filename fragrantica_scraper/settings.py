@@ -104,7 +104,7 @@ LOG_LEVEL = 'INFO'
 
 # === Configuration MongoDB ===
 # Utilise les variables d'environnement avec fallback sur valeurs par défaut
-MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
+MONGO_URI = os.getenv('MONGO_URI', 'mongodb://admin:password123@mongodb:27017/')
 MONGO_DATABASE = os.getenv('MONGO_DATABASE', 'fragrantica')
 
 # === Activation des pipelines ===

@@ -28,7 +28,7 @@ class PerfumeSpider(scrapy.Spider):
     
     def start_requests(self):
         """Load URLs from MongoDB and skip already scraped ones."""
-        # ✅ Valeur par défaut Docker-friendly
+        # Valeur par défaut Docker-friendly
         mongo_uri = self.settings.get(
             'MONGO_URI', 
             'mongodb://admin:password123@mongodb:27017/'

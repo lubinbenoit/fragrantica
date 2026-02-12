@@ -191,7 +191,7 @@ class PerfumeURLsSpider(scrapy.Spider):
             self.got_429 = True
             return
         
-        # 🔥 ON NE RÉCUPÈRE PLUS LE NOM DU DESIGNER
+        # ON NE RÉCUPÈRE PLUS LE NOM DU DESIGNER
         designer = response.meta.get("designer", "Unknown")  # Juste pour les logs
         
         perfume_links = list(set(

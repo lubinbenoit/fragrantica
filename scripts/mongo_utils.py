@@ -12,7 +12,7 @@ from pymongo import MongoClient
 from datetime import datetime
 from dotenv import load_dotenv
 
-# ✅ Charger les variables d'environnement
+# Charger les variables d'environnement
 load_dotenv()
 
 
@@ -22,7 +22,7 @@ class MongoUtils:
         Initialise la connexion MongoDB.
         Utilise les variables d'environnement si non spécifié.
         """
-        # ✅ Priorité : paramètre > .env > défaut Docker
+        # Priorité : paramètre > .env > défaut Docker
         self.uri = uri or os.getenv(
             'MONGO_URI', 
             'mongodb://admin:password123@localhost:27017/'
@@ -137,7 +137,7 @@ def main():
         sys.exit(1)
     
     command = sys.argv[1]
-    utils = MongoUtils()  # ✅ Utilise automatiquement .env
+    utils = MongoUtils()  # Utilise automatiquement .env
     
     try:
         if command == 'stats':
